@@ -1,0 +1,3 @@
+%{
+  "gpb": {:hex, :gpb, "4.10.1", "96f9e75ed69f3d9a3052082f0bfeaeea200e6d72ee9d6d585f954b4b933503d5", [:make, :rebar], [], "hexpm"},
+}

@@ -18,6 +18,8 @@ defmodule Twirp.MixProject do
   end
 
   defp deps() do
-    []
+    [
+      {:gpb, ">= 0.0.0"}
+    ]
   end
 end
