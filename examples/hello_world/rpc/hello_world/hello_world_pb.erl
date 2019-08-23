@@ -8,6 +8,8 @@
 -export([decode_msg/2, decode_msg/3]).
 -export([merge_msgs/3, merge_msgs/4]).
 -export([verify_msg/2, verify_msg/3]).
+-export([to_json/2, to_json/3]).
+-export([from_json/2, from_json/3]).
 -export([get_msg_defs/0]).
 -export([get_msg_names/0]).
 -export([get_group_names/0]).
@@ -662,6 +664,142 @@ cons(Elem, Acc, _TrUserData) -> [Elem | Acc].
 -compile({nowarn_unused_function,'erlang_++'/3}).
 -compile({inline,'erlang_++'/3}).
 'erlang_++'(A, B, _TrUserData) -> A ++ B.
+
+to_json(Msg, MsgName)
+    when is_map(Msg), is_atom(MsgName) ->
+    to_json(Msg, MsgName, []).
+
+to_json(Msg, MsgName, Opts) ->
+    case proplists:get_bool(verify, Opts) of
+      true -> verify_msg(Msg, MsgName, Opts);
+      false -> ok
+    end,
+    TrUserData = proplists:get_value(user_data, Opts),
+    case MsgName of
+      'HelloRequest' ->
+	  to_json_msg_HelloRequest(id(Msg, TrUserData),
+				   TrUserData);
+      'HelloResponse' ->
+	  to_json_msg_HelloResponse(id(Msg, TrUserData),
+				    TrUserData);
+      X -> error({gpb_error, {no_such_message, X}})
+    end.
+
+to_json_msg_HelloRequest(#{} = M, TrUserData) ->
+    J0 = tj_new_object(),
+    tj_finalize_obj(case M of
+		      #{name := F1} ->
+			  begin
+			    TrF1 = id(F1, TrUserData),
+			    case is_empty_string(TrF1) of
+			      true -> J0;
+			      false ->
+				  tj_add_field(<<"name">>, tj_string(TrF1), J0)
+			    end
+			  end;
+		      _ -> J0
+		    end).
+
+to_json_msg_HelloResponse(#{} = M, TrUserData) ->
+    J0 = tj_new_object(),
+    tj_finalize_obj(case M of
+		      #{message := F1} ->
+			  begin
+			    TrF1 = id(F1, TrUserData),
+			    case is_empty_string(TrF1) of
+			      true -> J0;
+			      false ->
+				  tj_add_field(<<"message">>, tj_string(TrF1),
+					       J0)
+			    end
+			  end;
+		      _ -> J0
+		    end).
+
+%% map object format helpers
+%% For example jsx, jiffy, others
+-compile({nowarn_unused_function,tj_new_object/0}).
+tj_new_object() -> #{}.
+
+-compile({nowarn_unused_function,tj_add_field/3}).
+tj_add_field(FieldName, Value, Object) ->
+    Object#{FieldName => Value}.
+
+-compile({nowarn_unused_function,tj_finalize_obj/1}).
+tj_finalize_obj(Object) -> Object.
+
+-compile({nowarn_unused_function,tj_array/1}).
+tj_array(L) -> L.
+
+tj_string(Value) -> unicode:characters_to_binary(Value).
+
+from_json(Json, MsgName) ->
+    from_json(Json, MsgName, []).
+
+from_json(Json, MsgName, Opts) ->
+    TrUserData = proplists:get_value(user_data, Opts),
+    from_json_1_catch(Json, MsgName, TrUserData).
+
+-ifdef('OTP_RELEASE').
+from_json_1_catch(Json, MsgName, TrUserData) ->
+    try from_json_2_doit(MsgName, Json, TrUserData)
+    catch Class:Reason:StackTrace -> error({gpb_error,{from_json_failure, {Json, MsgName, {Class, Reason, StackTrace}}}})
+    end.
+-else.
+from_json_1_catch(Json, MsgName, TrUserData) ->
+    try from_json_2_doit(MsgName, Json, TrUserData)
+    catch Class:Reason ->
+        StackTrace = erlang:get_stacktrace(),
+        error({gpb_error,{from_json_failure, {Json, MsgName, {Class, Reason, StackTrace}}}})
+    end.
+-endif.
+
+from_json_2_doit('HelloRequest', Json, TrUserData) ->
+    id(from_json_msg_HelloRequest(Json, TrUserData),
+       TrUserData);
+from_json_2_doit('HelloResponse', Json, TrUserData) ->
+    id(from_json_msg_HelloResponse(Json, TrUserData),
+       TrUserData).
+
+from_json_msg_HelloRequest(Json, TrUserData) ->
+    fj_msg_HelloRequest(fj_next(fj_iter(Json)),
+			#{name => id(<<>>, TrUserData)}, TrUserData).
+
+fj_msg_HelloRequest({JKey, JValue, JRest}, EMsg,
+		    TrUserData) ->
+    EMsg2 = case JKey of
+	      <<"name">> ->
+		  if JValue =:= null -> EMsg;
+		     true -> EMsg#{name => id(fj_string(JValue), TrUserData)}
+		  end;
+	      _ -> EMsg
+	    end,
+    fj_msg_HelloRequest(fj_next(JRest), EMsg2, TrUserData);
+fj_msg_HelloRequest(none, EMsg, _TrUserData) -> EMsg.
+
+from_json_msg_HelloResponse(Json, TrUserData) ->
+    fj_msg_HelloResponse(fj_next(fj_iter(Json)),
+			 #{message => id(<<>>, TrUserData)}, TrUserData).
+
+fj_msg_HelloResponse({JKey, JValue, JRest}, EMsg,
+		     TrUserData) ->
+    EMsg2 = case JKey of
+	      <<"message">> ->
+		  if JValue =:= null -> EMsg;
+		     true ->
+			 EMsg#{message => id(fj_string(JValue), TrUserData)}
+		  end;
+	      _ -> EMsg
+	    end,
+    fj_msg_HelloResponse(fj_next(JRest), EMsg2, TrUserData);
+fj_msg_HelloResponse(none, EMsg, _TrUserData) -> EMsg.
+
+fj_iter(Map) -> maps:iterator(Map).
+
+fj_next(Iter) -> maps:next(Iter).
+
+fj_string(S) when is_binary(S); is_list(S) ->
+    unicode:characters_to_binary(S).
 
 
 get_msg_defs() ->

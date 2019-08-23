@@ -19,6 +19,7 @@ defmodule Mix.Tasks.Compile.Twirp do
         protoc_erl_path,
         "-modsuffix",
         "_pb",
+        "-json",
         "-maps",
         "-strbin"
       ] ++ protos
@@ -63,15 +64,31 @@ defmodule Mix.Tasks.Compile.Twirp do
         handler = opts[:handler]
         {service_name, rpc_name} = pb_mod.fqbins_to_service_and_rpc_name(service_name, rpc_name)
         rpc = pb_mod.find_rpc_def(service_name, rpc_name)
-        {:ok, request_pb, conn} = Plug.Conn.read_body(conn)
-        request = pb_mod.decode_msg(request_pb, rpc.input)
-        function = :"handle_#\{rpc_name}"
-        result = apply(handler, function, [request])
-        response_pb = pb_mod.encode_msg(result, rpc.output)
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
 
-        conn
-        |> put_resp_header("content-type", "application/protobuf")
-        |> send_resp(200, response_pb)
+        case get_req_header(conn, "content-type") do
+          ["application/json"] ->
+            request = Jason.decode!(body)
+            request = pb_mod.from_json(request, rpc.input)
+            function = :"handle_#\{rpc_name}"
+            result = apply(handler, function, [request])
+            response_json = pb_mod.to_json(result, rpc.output)
+            response = Jason.encode_to_iodata!(response_json)
+
+            conn
+            |> put_resp_header("content-type", "application/json")
+            |> send_resp(200, response)
+
+          ["application/protobuf"] ->
+            request = pb_mod.decode_msg(body, rpc.input)
+            function = :"handle_#\{rpc_name}"
+            result = apply(handler, function, [request])
+            response_pb = pb_mod.encode_msg(result, rpc.output)
+
+            conn
+            |> put_resp_header("content-type", "application/protobuf")
+            |> send_resp(200, response_pb)
+        end
       end
 
       match _ do
@@ -136,6 +153,12 @@ defmodule Mix.Tasks.Compile.Twirp do
             options
             |> Keyword.put_new(:pb_mod, :hello_world_pb)
             |> HelloWorld.RPC.Server.start_link()
+          end
+
+          def child_spec(options) do
+            options
+            |> Keyword.put_new(:pb_mod, :hello_world_pb)
+            |> HelloWorld.RPC.Server.child_spec()
           end
         end
         """)

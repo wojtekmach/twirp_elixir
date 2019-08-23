@@ -28,7 +28,8 @@ defmodule HelloWorld.MixProject do
     [
       {:twirp, path: "../..", only: [:dev, :test]},
       {:httpoison, ">= 0.0.0"},
-      {:plug_cowboy, "~> 2.0"}
+      {:plug_cowboy, "~> 2.0"},
+      {:jason, "~> 1.0"}
     ]
   end
 end

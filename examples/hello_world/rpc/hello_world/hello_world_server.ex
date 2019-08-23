@@ -7,4 +7,10 @@ defmodule HelloWorld.RPC.HelloWorldServer do
     |> Keyword.put_new(:pb_mod, :hello_world_pb)
     |> HelloWorld.RPC.Server.start_link()
   end
+
+  def child_spec(options) do
+    options
+    |> Keyword.put_new(:pb_mod, :hello_world_pb)
+    |> HelloWorld.RPC.Server.child_spec()
+  end
 end
