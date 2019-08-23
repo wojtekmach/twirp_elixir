@@ -1,5 +1,5 @@
 defmodule Handler do
-  def handle_Hello(%{name: name}) do
+  def handle_hello(%{name: name}) do
     %{message: "Hello #{name}!"}
   end
 end

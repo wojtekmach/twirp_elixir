@@ -18,7 +18,7 @@ defmodule HelloWorld.RPC.Server do
       ["application/json"] ->
         request = Jason.decode!(body)
         request = pb_mod.from_json(request, rpc.input)
-        function = :"handle_#{rpc_name}"
+        function = :"handle_#{Macro.underscore(Atom.to_string(rpc_name))}"
         result = apply(handler, function, [request])
         response_json = pb_mod.to_json(result, rpc.output)
         response = Jason.encode_to_iodata!(response_json)
@@ -29,7 +29,7 @@ defmodule HelloWorld.RPC.Server do
 
       ["application/protobuf"] ->
         request = pb_mod.decode_msg(body, rpc.input)
-        function = :"handle_#{rpc_name}"
+        function = :"handle_#{Macro.underscore(Atom.to_string(rpc_name))}"
         result = apply(handler, function, [request])
         response_pb = pb_mod.encode_msg(result, rpc.output)
 
@@ -51,7 +51,9 @@ defmodule HelloWorld.RPC.Server do
     http_options = Keyword.drop(options, [:pb_mod, :handler])
 
     message =
-      "Starting #{inspect(__MODULE__)} for #{inspect(options[:handler])} with #{inspect(http_options)}"
+      "Starting #{inspect(__MODULE__)} for #{inspect(options[:handler])} with #{
+        inspect(http_options)
+      }"
 
     require Logger
     Logger.info(message)
