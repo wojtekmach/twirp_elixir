@@ -3,7 +3,7 @@ defmodule Twirp.MixProject do
 
   def project() do
     [
-      app: :twirp,
+      app: :twirp_elixir,
       version: "0.1.0",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
