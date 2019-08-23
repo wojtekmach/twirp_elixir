@@ -1,2 +1,0 @@
-defmodule Twirp do
-end
