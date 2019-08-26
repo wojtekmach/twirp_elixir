@@ -9,10 +9,10 @@ defmodule Mix.Tasks.Compile.Twirp do
 
     template_root = Path.expand("../../templates", __DIR__)
 
-    code = EEx.eval_file(Path.join(template_root, "client.ex.exs"), [prefix: prefix])
+    code = EEx.eval_file(Path.join(template_root, "client.ex.exs"), prefix: prefix)
     write!("rpc/client.ex", code)
 
-    code = EEx.eval_file(Path.join(template_root, "server.ex.exs"), [prefix: prefix])
+    code = EEx.eval_file(Path.join(template_root, "server.ex.exs"), prefix: prefix)
     write!("rpc/server.ex", code)
 
     for proto <- protos do

@@ -11,7 +11,7 @@ defmodule HelloWorldTest do
   test "protobuf" do
     {:ok, _} = start_supervised({HelloWorldServer, handler: Handler, port: 8080})
 
-    client = HelloWorldClient.new(base_url: "http://localhost:8080/twirp")
+    client = HelloWorldClient.new(base_url: "http://localhost:8080")
     assert HelloWorldClient.hello(client, %{name: "World"}) == %{message: "Hello World!"}
   end
 
