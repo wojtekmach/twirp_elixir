@@ -6,16 +6,17 @@ end
 
 defmodule HelloWorldTest do
   use ExUnit.Case, async: true
+  alias HelloWorld.RPC.{HelloWorldClient, HelloWorldServer}
 
   test "protobuf" do
-    {:ok, _} = start_supervised({HelloWorld.RPC.HelloWorldServer, handler: Handler, port: 8080})
+    {:ok, _} = start_supervised({HelloWorldServer, handler: Handler, port: 8080})
 
-    assert HelloWorld.RPC.HelloWorldClient.hello("http://localhost:8080/twirp", %{name: "World"}) ==
-             %{message: "Hello World!"}
+    client = HelloWorldClient.new(base_url: "http://localhost:8080/twirp")
+    assert HelloWorldClient.hello(client, %{name: "World"}) == %{message: "Hello World!"}
   end
 
   test "json" do
-    {:ok, _} = start_supervised({HelloWorld.RPC.HelloWorldServer, handler: Handler, port: 8081})
+    {:ok, _} = start_supervised({HelloWorldServer, handler: Handler, port: 8081})
 
     assert HTTPoison.post!(
              "http://localhost:8081/twirp/example.hello_world.HelloWorld/Hello",

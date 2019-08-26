@@ -2,11 +2,23 @@
 defmodule HelloWorld.RPC.HelloWorldClient do
   @moduledoc false
 
+  defstruct [:base_url]
+
+  def new(options) do
+    struct!(__MODULE__, options)
+  end
+
   for rpc_name <- :hello_world_pb.get_rpc_names(:HelloWorld) do
     function_name = Macro.underscore(Atom.to_string(rpc_name)) |> String.to_atom()
 
-    def unquote(function_name)(url, params) do
-      HelloWorld.RPC.Client.call(url, :hello_world_pb, :HelloWorld, unquote(rpc_name), params)
+    def unquote(function_name)(client, params) do
+      HelloWorld.RPC.Client.call(
+        client.base_url,
+        :hello_world_pb,
+        :HelloWorld,
+        unquote(rpc_name),
+        params
+      )
     end
   end
 end

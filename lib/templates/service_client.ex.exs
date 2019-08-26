@@ -2,11 +2,17 @@
 defmodule <%= prefix %>.RPC.<%= service_name %>Client do
   @moduledoc false
 
+  defstruct [:base_url]
+
+  def new(options) do
+    struct!(__MODULE__, options)
+  end
+
   for rpc_name <- <%= inspect(pb_mod) %>.get_rpc_names(<%= inspect(service_name) %>) do
     function_name = Macro.underscore(Atom.to_string(rpc_name)) |> String.to_atom()
 
-    def unquote(function_name)(url, params) do
-      <%= prefix %>.RPC.Client.call(url, <%= inspect(pb_mod) %>, <%= inspect(service_name) %>, unquote(rpc_name), params)
+    def unquote(function_name)(client, params) do
+      <%= prefix %>.RPC.Client.call(client.base_url, <%= inspect(pb_mod) %>, <%= inspect(service_name) %>, unquote(rpc_name), params)
     end
   end
 end

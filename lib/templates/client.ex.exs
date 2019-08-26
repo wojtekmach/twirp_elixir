@@ -2,10 +2,10 @@
 defmodule <%= prefix %>.RPC.Client do
   @moduledoc false
 
-  def call(url, pb_mod, service, rpc_name, request) do
+  def call(base_url, pb_mod, service, rpc_name, request) do
     rpc = pb_mod.find_rpc_def(service, rpc_name)
     package_name = pb_mod.get_package_name()
-    url = "#{url}/#{package_name}.#{service}/#{rpc_name}"
+    url = "#{base_url}/#{package_name}.#{service}/#{rpc_name}"
     request_pb = pb_mod.encode_msg(request, rpc.input)
     headers = [{"content-type", "application/protobuf"}]
     response_pb = post!(url, request_pb, headers)
