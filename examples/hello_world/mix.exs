@@ -26,7 +26,7 @@ defmodule HelloWorld.MixProject do
 
   defp deps() do
     [
-      {:twirp, path: "../..", only: [:dev, :test]},
+      {:twirp_elixir, path: "../..", only: [:dev, :test]},
       {:httpoison, ">= 0.0.0"},
       {:plug_cowboy, "~> 2.0"},
       {:jason, "~> 1.0"}
