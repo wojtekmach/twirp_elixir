@@ -13,6 +13,9 @@ defmodule HelloWorld.RPC.Client do
   end
 
   defp post!(url, pb, headers) do
-    HTTPoison.post!(url, pb, headers).body
+    options = []
+    {:ok, _status, _headers, ref} = :hackney.request(:post, url, headers, pb, options)
+    {:ok, body} = :hackney.body(ref)
+    body
   end
 end
