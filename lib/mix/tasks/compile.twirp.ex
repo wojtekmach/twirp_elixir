@@ -60,7 +60,11 @@ defmodule Mix.Tasks.Compile.Twirp do
 
   @impl true
   def clean() do
-    Path.wildcard("rpc/**/*.{erl,ex}")
-    |> Enum.each(&File.rm_rf!/1)
+    files =
+      ~w(rpc/client.ex rpc/server.ex) ++
+        Path.wildcard("rpc/**/*_pb.erl") ++
+        Path.wildcard("rpc/**/*_{client,server}.ex")
+
+    Enum.each(files, &File.rm_rf!/1)
   end
 end
